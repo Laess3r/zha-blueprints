@@ -1,0 +1,55 @@
+blueprint:
+  name: Ikea Tradfri on/off switch cover control
+  description: |
+    Source: https://community.home-assistant.io/t/zha-ikea-on-off-switch-for-shutters/255256
+    Control a Cover with an Ikea Tradfri two button remote over ZHA
+
+    Short press on I button will toggle the Cover state.
+    Short press on 0 button will stop the Cover.
+    Long press on I button will open the Cover.
+    Long press on 0 button will close the Cover.
+  domain: automation
+  input:
+    remote:
+      name: Remote
+      description: IKEA 2btn remote to use
+      selector:
+        device:
+          integration: zha
+          manufacturer: IKEA of Sweden
+          model: TRADFRI on/off switch
+    cover:
+      name: Cover
+      description: The Cover to control
+      selector:
+        target:
+          entity:
+            domain: cover
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input remote
+action:
+- choose:
+  - conditions:
+    - '{{ trigger.event.data.command == "on" }}'
+    sequence:
+    - service: cover.toggle
+      target: !input cover
+  - conditions:
+    - '{{ trigger.event.data.command == "off" }}'
+    sequence:
+    - service: cover.stop_cover
+      target: !input cover
+  - conditions:
+    - '{{ trigger.event.data.command == "move" }}'
+    sequence:
+    - service: cover.close_cover
+      target: !input cover
+  - conditions:
+    - '{{ trigger.event.data.command == "move_with_on_off" }}'
+    sequence:
+    - service: cover.open_cover
+      target: !input cover
+mode: restart
